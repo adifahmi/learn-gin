@@ -6,5 +6,6 @@ func Routes(r *gin.RouterGroup) {
 	user := r.Group("/user")
 	{
 		user.GET("/", listUsers)
+		user.POST("/register", register)
 	}
 }

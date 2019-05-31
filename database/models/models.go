@@ -11,7 +11,7 @@ type User struct {
 	gorm.Model
 	Username string `gorm:"size:190;not null"`
 	Email    string `gorm:"size:190;unique_index;not null"`
-	Password string `gorm:"size:190;not null"`
+	Password string `json:",omitempty" gorm:"size:190;not null"`
 	Age      int
 }
 
