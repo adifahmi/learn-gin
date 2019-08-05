@@ -1,8 +1,7 @@
 package models
 
 import (
-	"fmt"
-
+	"github.com/adifahmi/learn-gin/lib"
 	"github.com/jinzhu/gorm"
 )
 
@@ -15,8 +14,12 @@ type User struct {
 	Age      int
 }
 
-// Migrate automigration
-func Migrate(db *gorm.DB) {
-	db.AutoMigrate(&User{})
-	fmt.Println("Tables migrated")
+// Serialize serializes user data
+func (u *User) Serialize() lib.JSON {
+	return lib.JSON{
+		"id":       u.ID,
+		"username": u.Username,
+		"email":    u.Email,
+		"age":      u.Age,
+	}
 }
