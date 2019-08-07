@@ -7,11 +7,11 @@ import (
 
 // User model
 type User struct {
-	gorm.Model
-	Username string `gorm:"size:190;not null"`
-	Email    string `gorm:"size:190;unique_index;not null"`
-	Password string `json:",omitempty" gorm:"size:190;not null"`
-	Age      int
+	gorm.Model `json:"-"`
+	Username   string `gorm:"size:190;not null"`
+	Email      string `gorm:"size:190;unique_index;not null"`
+	Password   string `json:",omitempty" gorm:"size:190;not null"`
+	Age        int
 }
 
 // Serialize serializes user data
