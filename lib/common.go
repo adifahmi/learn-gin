@@ -38,3 +38,15 @@ func GenerateToken(data JSON, days int) (string, error) {
 	tokenString, err := token.SignedString(key)
 	return tokenString, err
 }
+
+// ParseToken accept token string and decode it
+func ParseToken(tokenString string) (jwt.MapClaims, error) {
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(
+		tokenString, claims,
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("SECRET_KEY")), nil
+		},
+	)
+	return claims, err
+}
