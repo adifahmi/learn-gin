@@ -3,12 +3,14 @@ package user
 import (
 	"fmt"
 	"net/http"
+	// "reflect"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 
 	"github.com/adifahmi/learn-gin/database/models"
 	"github.com/adifahmi/learn-gin/lib"
+	"github.com/mitchellh/mapstructure"
 )
 
 type User = models.User
@@ -20,11 +22,23 @@ func listUsers(c *gin.Context) {
 
 	err := db.Select("id, username, email, age").Find(&users).Error
 	if err != nil {
+		c.AbortWithStatus(500)
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"data": users,
 	})
+}
+
+func serializeAndGenerateToken(user User) (map[string]interface{}, string) {
+	serializedUser := user.Serialize()
+	token, tokenErr := lib.GenerateToken(serializedUser, 7)
+	if tokenErr != nil {
+		panic("Err generate token")
+	}
+
+	return serializedUser, token
 }
 
 func register(c *gin.Context) {
@@ -75,18 +89,80 @@ func register(c *gin.Context) {
 	db.NewRecord(user)
 	db.Create(&user)
 
-	serialized := user.Serialize()
-	token, tokenErr := lib.GenerateToken(serialized, 7)
-	if tokenErr != nil {
-		fmt.Println("tokenErr", tokenErr)
-		c.AbortWithStatus(500)
+	serializedUser, token := serializeAndGenerateToken(user)
+
+	c.JSON(200, lib.JSON{
+		"user":  serializedUser,
+		"token": token,
+	})
+}
+
+func login(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+
+	type RequestBody struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	var body RequestBody
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid request body",
+		})
+		fmt.Println(err)
 		return
 	}
 
-	c.SetCookie("token", token, 60*60*24*7, "/", "", false, true)
+	// Check existence
+	var currentUser User
+	if db.Where("username = ?", body.Username).First(&currentUser).RecordNotFound() {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "username doesn't exists",
+		})
+		return
+	}
+
+	if lib.CheckHash(body.Password, currentUser.Password) == false {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid password",
+		})
+		return
+	}
+
+	serializedUser, token := serializeAndGenerateToken(currentUser)
 
 	c.JSON(200, lib.JSON{
-		"user":  user.Serialize(),
+		"user":  serializedUser,
 		"token": token,
+	})
+}
+
+func check(c *gin.Context) {
+	token := c.Request.Header.Get("token")
+
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "empty token",
+		})
+		return
+	}
+
+	claims, err := lib.ParseToken(token)
+
+	if err != nil {
+		fmt.Println("err parse token", err)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "invalid token",
+		})
+		return
+	}
+
+	var currentUser User
+	mapstructure.Decode(claims["user"], &currentUser)
+
+	c.JSON(200, lib.JSON{
+		"token": token,
+		"user":  currentUser.Serialize(),
 	})
 }
