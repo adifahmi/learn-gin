@@ -14,6 +14,7 @@
 # Bin build
 gin-bin
 learn-gin
+main
 
 # VS Code
 .vscode/*
