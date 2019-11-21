@@ -7,7 +7,7 @@ For learning purpose
 
 #### Create Database / Account
 ```sql
-CREATE DATABASE gin_test;
+CREATE DATABASE `gin_test` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 #### Project Setup & Run
