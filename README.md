@@ -12,21 +12,27 @@ CREATE DATABASE `gin_test` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 #### Project Setup & Run
 
-```
+```shell
 $ go get
 $ go run main.go
 ```
 
 #### To explicitly compile the code before you run the server:
 
-```
+```shell
 $ go build main.go
 $ ./main
 ```
 
 ### Live-reload for development 
+
+Install gin live-reload and run
+
+```shell
+$ go get github.com/codegangsta/gin
 ```
-$ scripts/run-dev.sh
+```shell
+$ bash scripts/run-dev.sh
 ```
 
 #### Postman Docs:
