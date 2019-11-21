@@ -3,7 +3,8 @@ package user
 import (
 	"fmt"
 	"net/http"
-	// "reflect"
+
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -13,6 +14,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// User can copy from the model itself
 type User = models.User
 
 func listUsers(c *gin.Context) {
@@ -45,8 +47,8 @@ func register(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
-		Username string `json:"username" binding:"required,exists,alphanum,min=4,max=190"`
-		Email    string `json:"email" binding:"required,exists,email,max=190"`
+		Username string `json:"username" binding:"required,alphanum,min=4,max=190"`
+		Email    string `json:"email" binding:"required,email,max=190"`
 		Age      int    `json:"age"`
 		Password string `json:"password" binding:"required"`
 	}
@@ -118,14 +120,14 @@ func login(c *gin.Context) {
 	var currentUser User
 	if db.Where("username = ?", body.Username).First(&currentUser).RecordNotFound() {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "username doesn't exists",
+			"message": "Invalid username or password",
 		})
 		return
 	}
 
 	if lib.CheckHash(body.Password, currentUser.Password) == false {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "invalid password",
+			"message": "Invalid username or password",
 		})
 		return
 	}
@@ -149,6 +151,7 @@ func check(c *gin.Context) {
 	}
 
 	claims, err := lib.ParseToken(token)
+	userClaims := claims["user"]
 
 	if err != nil {
 		fmt.Println("err parse token", err)
@@ -159,10 +162,15 @@ func check(c *gin.Context) {
 	}
 
 	var currentUser User
-	mapstructure.Decode(claims["user"], &currentUser)
+	mapstructure.Decode(userClaims, &currentUser)
+	serializedUser := currentUser.Serialize()
+
+	// delete the id from user map
+	delete(serializedUser, "id")
+	fmt.Println(serializedUser, reflect.TypeOf(serializedUser))
 
 	c.JSON(200, lib.JSON{
 		"token": token,
-		"user":  currentUser.Serialize(),
+		"user":  serializedUser,
 	})
 }
