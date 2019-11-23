@@ -5,7 +5,10 @@ For learning purpose
 - MariaDB/MySQL intergration with [GORM](http://gorm.io/)
 
 
-#### Create Database / Account
+#### Database Setup
+
+Update .env file to match your environment, then create new DB
+
 ```sql
 CREATE DATABASE `gin_test` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
